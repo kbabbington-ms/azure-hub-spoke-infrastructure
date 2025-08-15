@@ -1,0 +1,29 @@
+# Azure specific
+.azure/
+*.log
+
+# Bicep
+*.generated.json
+
+# IDE
+.vscode/
+.vs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Secrets (never commit these!)
+*.env
+.env*
+secrets.json
+
+# PowerShell
+*.ps1xml
+
+# Azure CLI
+.azurecli/
