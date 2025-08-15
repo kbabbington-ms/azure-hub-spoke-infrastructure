@@ -138,7 +138,25 @@ Perfect for:
 - **Private Cloud**: Minimal internet exposure
 - **Platform Engineering**: Reusable infrastructure patterns
 
-## 🔍 Troubleshooting
+## � Version History
+
+### v1.0.0-working-basic (Current)
+- ✅ Complete hub-spoke network topology with VNet peering
+- ✅ Azure Bastion for secure remote access without public IPs
+- ✅ Windows Server VM with Azure extensions (Monitor, Policy, Antimalware, AAD Login)
+- ✅ Azure SQL Database with private endpoint connectivity
+- ✅ Key Vault with private endpoint and RBAC integration
+- ✅ PowerShell deployment automation and multi-environment support
+- ✅ Successfully tested and deployed in Central US region
+- ⚠️ **Security Note**: Uses plaintext passwords in dev/test parameter files
+
+### 🔄 Upcoming v1.1.0-secure
+- 🚀 Bootstrap pattern for secure credential management
+- 🔐 Key Vault-based password generation and storage
+- 🔄 CI/CD-ready deployment process with Azure DevOps integration
+- 🛡️ Enhanced security best practices
+
+## �🔍 Troubleshooting
 
 ### Common Issues
 1. **SQL MI Quota**: Switch to SQL Database if MI quota unavailable
