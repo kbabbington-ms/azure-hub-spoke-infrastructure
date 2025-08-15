@@ -1,0 +1,57 @@
+name: Bicep Template Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Azure CLI
+      uses: azure/CLI@v1
+      with:
+        azcliversion: latest
+    
+    - name: Setup Bicep CLI
+      run: az bicep install
+    
+    - name: Validate Main Template
+      run: |
+        az bicep build --file main.bicep
+        
+    - name: Validate Module Templates
+      run: |
+        for module in modules/*/*.bicep; do
+          echo "Validating $module"
+          az bicep build --file "$module"
+        done
+        
+    - name: Check for Bicep Linting Issues
+      run: |
+        az bicep build --file main.bicep --outfile /dev/null
+        
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Checkov security scan
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: .
+        framework: bicep
+        output_format: sarif
+        output_file_path: results.sarif
+        
+    - name: Upload Checkov results to GitHub
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: results.sarif
