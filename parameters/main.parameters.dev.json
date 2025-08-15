@@ -21,13 +21,23 @@
       "value": "azureadmin"
     },
     "vmAdminPassword": {
-      "value": "P@ssw0rd123!"
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cus/providers/Microsoft.KeyVault/vaults/{vault-name}"
+        },
+        "secretName": "vm-admin-password"
+      }
     },
     "sqlAdminLogin": {
       "value": "sqladmin"
     },
     "sqlAdminPassword": {
-      "value": "P@ssw0rd123!"
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cus/providers/Microsoft.KeyVault/vaults/{vault-name}"
+        },
+        "secretName": "sql-admin-password"
+      }
     },
     "keyVaultAdminObjectId": {
       "value": "f91ec0b1-b773-439d-893c-8af32cbf2577"

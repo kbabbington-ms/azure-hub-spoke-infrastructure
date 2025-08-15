@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "centralus"
+    },
+    "environment": {
+      "value": "dev"
+    },
+    "workloadName": {
+      "value": "platform-ops"
+    },
+    "keyVaultAdminObjectId": {
+      "value": "f91ec0b1-b773-439d-893c-8af32cbf2577"
+    },
+    "tags": {
+      "value": {
+        "Environment": "dev",
+        "Workload": "platform-ops",
+        "Created-By": "Bicep-Bootstrap",
+        "Cost-Center": "Platform Engineering",
+        "Owner": "Platform Team",
+        "Purpose": "Secure Credential Management"
+      }
+    }
+  }
+}
