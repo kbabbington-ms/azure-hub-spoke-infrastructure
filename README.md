@@ -1,220 +1,178 @@
-# Azure Platform Engineering Environment
+# Azure Hub-Spoke Infrastructure with Bicep
 
-This repository contains Bicep templates and deployment scripts for creating a comprehensive Azure environment designed for Platform Engineering and Operations teams. The solution follows Microsoft Cloud Adoption Framework naming conventions and implements DevOps best practices with modular, reusable Bicep templates.
+A production-ready Azure infrastructure solution implementing a hub-spoke network topology with secure compute, database, and storage resources.
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
-The solution deploys a **hub-spoke network topology** with the following components:
+This solution deploys a comprehensive Azure infrastructure following Microsoft's Cloud Adoption Framework and Well-Architected Framework principles:
 
 ### Network Architecture
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Resource Group                           │
-│                rg-platform-ops-prod-scus                   │
-├─────────────────────────────────────────────────────────────┤
-│  Hub VNet (192.16.1.0/24)    │  Spoke VNet (192.16.2.0/24) │
-│  ┌─────────────────────────┐  │  ┌─────────────────────────┐ │
-│  │ AzureBastionSubnet      │  │  │ snet-vm (/26)          │ │
-│  │ (/26 - minimum req)     │◄─┼──┤ - Windows VM           │ │
-│  └─────────────────────────┘  │  │ - NSG                  │ │
-│                               │  └─────────────────────────┘ │
-│                               │  ┌─────────────────────────┐ │
-│                               │  │ snet-pep (/28)         │ │
-│                               │  │ - SQL MI Private EP    │ │
-│                               │  │ - Key Vault Private EP │ │
-│                               │  │ - Private DNS Zones    │ │
-│                               │  └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
+- **Hub VNet**: Central connectivity point with Azure Bastion
+- **Spoke VNet**: Workload-specific network with multiple subnets
+- **VNet Peering**: Secure connectivity between hub and spoke
+- **Private Endpoints**: Secure access to PaaS services
 
 ### Key Components
+- **Azure Bastion**: Secure RDP/SSH access without public IPs
+- **Windows Server VM**: Enterprise-ready with Azure extensions
+- **Azure SQL Database**: Serverless database with private connectivity
+- **Key Vault**: Centralized secrets management with private endpoint
+- **Network Security Groups**: Micro-segmentation and traffic control
 
-- **Hub Virtual Network**: Contains Azure Bastion for secure remote access
-- **Spoke Virtual Network**: Hosts compute workloads and private endpoints
-- **Azure Bastion**: Provides secure RDP/SSH access without public IPs
-- **Windows Server VM**: Latest Azure Edition with Entra ID join and extensions
-- **SQL Managed Instance**: Private, managed database service
-- **Key Vault**: Secure storage for secrets and certificates
-- **Private Endpoints**: Secure connectivity to Azure PaaS services
-- **Network Security Groups**: Layered security controls
+## 🚀 Quick Start
 
-## Prerequisites
-
-- Azure CLI or Azure PowerShell
+### Prerequisites
+- Azure CLI installed and configured
+- PowerShell 5.1 or later
 - Azure subscription with appropriate permissions
-- Bicep CLI (latest version)
-- PowerShell 7.0+ (for deployment scripts)
 
-## Quick Start
+### Deployment
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd Simple Environment
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd azure-hub-spoke-infrastructure
+   ```
 
-### 2. Update Parameters
-Edit the parameter files in the `parameters/` directory:
-- `main.parameters.dev.json` - Development environment
-- `main.parameters.test.json` - Test environment  
-- `main.parameters.prod.json` - Production environment
+2. **Configure parameters**
+   - Update `parameters/main.parameters.dev.json` with your values
+   - Set your Key Vault admin object ID
+   - Adjust network address spaces if needed
 
-**Important**: Update the following values:
-- `keyVaultAdminObjectId`: Your Azure AD user/service principal object ID
-- Subscription ID in Key Vault references (prod environment only)
+3. **Deploy using PowerShell script**
+   ```powershell
+   .\scripts\deploy.ps1 -Environment dev -SubscriptionId "your-subscription-id" -KeyVaultAdminObjectId "your-object-id"
+   ```
 
-### 3. Deploy Using PowerShell Script
+4. **Or deploy using Azure CLI**
+   ```bash
+   az deployment group create \
+     --resource-group "rg-platform-ops-dev-cus" \
+     --template-file "main.bicep" \
+     --parameters "@parameters/main.parameters.dev.json"
+   ```
 
-**Development Environment:**
-```powershell
-.\scripts\deploy.ps1 -Environment dev -SubscriptionId "your-subscription-id" -KeyVaultAdminObjectId "your-object-id"
-```
-
-**Production Environment:**
-```powershell
-.\scripts\deploy.ps1 -Environment prod -SubscriptionId "your-subscription-id" -KeyVaultAdminObjectId "your-object-id"
-```
-
-**What-If Analysis:**
-```powershell
-.\scripts\deploy.ps1 -Environment dev -SubscriptionId "your-subscription-id" -KeyVaultAdminObjectId "your-object-id" -WhatIf
-```
-
-### 4. Deploy Using Azure CLI
-
-```bash
-# Create resource group
-az group create --name rg-platform-ops-dev-scus --location southcentralus
-
-# Deploy template
-az deployment group create \
-  --resource-group rg-platform-ops-dev-scus \
-  --template-file main.bicep \
-  --parameters @parameters/main.parameters.dev.json \
-  --parameters keyVaultAdminObjectId="your-object-id"
-```
-
-## Directory Structure
+## 📁 Project Structure
 
 ```
-├── main.bicep                          # Main deployment template
-├── modules/                            # Reusable Bicep modules
-│   ├── network/
-│   │   ├── hub-vnet.bicep             # Hub virtual network
-│   │   ├── spoke-vnet.bicep           # Spoke virtual network
-│   │   └── vnet-peering.bicep         # VNet peering
+├── main.bicep                          # Main orchestration template
+├── modules/
 │   ├── bastion/
-│   │   └── bastion.bicep              # Azure Bastion
+│   │   └── bastion.bicep              # Azure Bastion configuration
 │   ├── compute/
-│   │   └── virtual-machine.bicep      # Windows Server VM
+│   │   └── virtual-machine.bicep      # VM with extensions
 │   ├── database/
-│   │   └── sql-managed-instance.bicep # SQL Managed Instance
+│   │   ├── sql-database.bicep         # Azure SQL Database
+│   │   └── sql-managed-instance.bicep # Alternative SQL MI option
+│   ├── network/
+│   │   ├── hub-vnet.bicep            # Hub virtual network
+│   │   ├── spoke-vnet.bicep          # Spoke virtual network
+│   │   └── vnet-peering.bicep        # VNet peering configuration
 │   └── security/
-│       └── key-vault.bicep            # Key Vault with private endpoint
-├── parameters/                         # Environment-specific parameters
-│   ├── main.parameters.dev.json
-│   ├── main.parameters.test.json
-│   └── main.parameters.prod.json
-├── scripts/
-│   └── deploy.ps1                     # PowerShell deployment script
-└── README.md                          # This file
+│       └── key-vault.bicep           # Key Vault with private endpoint
+├── parameters/
+│   ├── main.parameters.dev.json      # Development environment
+│   ├── main.parameters.test.json     # Test environment
+│   └── main.parameters.prod.json     # Production environment
+└── scripts/
+    └── deploy.ps1                    # PowerShell deployment script
 ```
 
-## Resource Naming Convention
+## 🔧 Configuration
 
-Following Microsoft Cloud Adoption Framework (CAF):
+### Environment Parameters
+Each environment has its own parameter file in the `parameters/` folder:
 
-| Resource Type | Naming Pattern | Example |
-|---------------|----------------|---------|
-| Resource Group | `rg-{workload}-{environment}-{region}` | `rg-platform-ops-prod-scus` |
-| Virtual Network | `vnet-{hub/spoke}-{workload}-{environment}-{region}` | `vnet-hub-platform-ops-prod-scus` |
-| Subnet | `snet-{purpose}-{workload}-{environment}-{region}` | `snet-vm-platform-ops-prod-scus` |
-| Virtual Machine | `vm-{workload}-{environment}-{instance}` | `vm-platform-ops-prod-001` |
-| SQL MI | `sqlmi-{workload}-{environment}-{region}` | `sqlmi-platform-ops-prod-scus` |
-| Key Vault | `kv-{workload}-{environment}-{uniquestring}` | `kv-platform-ops-prod-abc123` |
-| Bastion | `bas-{workload}-{environment}-{region}` | `bas-platform-ops-prod-scus` |
+- **Development**: `main.parameters.dev.json`
+- **Test**: `main.parameters.test.json`
+- **Production**: `main.parameters.prod.json`
 
-## Security Features
+### Key Parameters
+- `location`: Azure region for deployment
+- `workloadName`: Used in resource naming
+- `hubVnetAddressSpace`: CIDR for hub network
+- `spokeVnetAddressSpace`: CIDR for spoke network
+- `keyVaultAdminObjectId`: Your Azure AD object ID for Key Vault access
 
-### Network Security
-- Private endpoints for SQL MI and Key Vault
-- Network Security Groups with least privilege rules
-- No public IP addresses on VMs
-- Hub-spoke network isolation
+## 🛡️ Security Features
 
-### Identity & Access Management
-- Azure RBAC for Key Vault (recommended over access policies)
-- Entra ID (Azure AD) joined VMs
-- Managed identities where applicable
-- Principle of least privilege
+- **Network Isolation**: Private subnets with NSG rules
+- **Private Endpoints**: Secure access to PaaS services
+- **Azure Bastion**: Eliminates need for public IPs on VMs
+- **Key Vault**: Centralized secrets management
+- **Azure AD Integration**: VM login with Azure AD credentials
+- **Security Extensions**: Antimalware and monitoring agents
 
-### Data Protection
-- SQL MI with private endpoint only
-- Key Vault for secure secret storage
-- Encrypted storage accounts
-- TLS 1.2 minimum encryption
+## 🌐 Network Design
 
-## VM Extensions Included
+### Hub VNet (10.1.0.0/24)
+- **AzureBastionSubnet**: 10.1.0.0/26 (Bastion service)
 
-- **Azure Monitor Agent**: Enhanced monitoring and logging
-- **Microsoft Antimalware**: Real-time protection
-- **AAD Login Extension**: Entra ID authentication
-- **Custom Script Extension**: Post-deployment configuration
+### Spoke VNet (10.2.0.0/24)
+- **VM Subnet**: 10.2.0.0/26 (Virtual machines)
+- **Private Endpoint Subnet**: 10.2.0.64/26 (PaaS services)
+- **SQL MI Subnet**: 10.2.0.128/27 (Reserved for SQL MI if needed)
 
-## Monitoring & Operations
+## 🔄 Deployment Options
 
-- Boot diagnostics enabled with managed storage
-- Azure Monitor Agent for telemetry collection
-- Centralized secret management via Key Vault
-- Automated backup capabilities (configurable)
+### SQL Database vs SQL Managed Instance
+This template includes both options:
+- **SQL Database** (default): Faster deployment, better for most workloads
+- **SQL Managed Instance**: Enterprise features, longer deployment time
 
-## Environment Differences
+Switch by modifying the main.bicep template to use the appropriate module.
 
-| Feature | Dev | Test | Prod |
-|---------|-----|------|------|
-| Network Range | 10.1.x.x/10.2.x.x | 10.11.x.x/10.12.x.x | 192.16.1.x/192.16.2.x |
-| Password Management | Generated | Generated | Key Vault Reference |
-| SQL MI Backup | 7 days | 7 days | 35 days |
-| VM SKU | Standard_D4s_v5 | Standard_D4s_v5 | Standard_D4s_v5 |
+## 📊 Monitoring and Compliance
 
-## Troubleshooting
+- **Azure Monitor**: VM monitoring with Windows Agent
+- **Azure Policy**: Compliance monitoring
+- **Diagnostic Settings**: Centralized logging
+- **Security Extensions**: Threat protection
+
+## 🎯 Use Cases
+
+Perfect for:
+- **Development/Test Environments**: Isolated, secure infrastructure
+- **Small to Medium Workloads**: Cost-effective enterprise features
+- **Hub-Spoke Architecture**: Centralized connectivity and security
+- **Private Cloud**: Minimal internet exposure
+- **Platform Engineering**: Reusable infrastructure patterns
+
+## 🔍 Troubleshooting
 
 ### Common Issues
+1. **SQL MI Quota**: Switch to SQL Database if MI quota unavailable
+2. **VM Name Length**: Computer name limited to 15 characters
+3. **Region Capacity**: Try different Azure regions if deployment fails
 
-1. **Key Vault Access**: Ensure the `keyVaultAdminObjectId` parameter contains your correct Azure AD object ID
-2. **Deployment Timeout**: SQL MI deployment can take 4-6 hours - this is expected
-3. **Network Conflicts**: Verify VNet address spaces don't overlap with existing networks
-4. **Permissions**: Ensure you have Contributor access to the target subscription
-
-### Validation Commands
-
+### Validation
 ```bash
-# Validate Bicep template
+# Validate template before deployment
 az deployment group validate \
-  --resource-group rg-platform-ops-dev-scus \
-  --template-file main.bicep \
-  --parameters @parameters/main.parameters.dev.json
-
-# Check deployment status
-az deployment group show \
-  --resource-group rg-platform-ops-dev-scus \
-  --name deploy-platform-ops-dev-20240815120000
+  --resource-group "your-rg" \
+  --template-file "main.bicep" \
+  --parameters "@parameters/main.parameters.dev.json"
 ```
 
-## Contributing
+## 🤝 Contributing
 
-1. Follow the existing naming conventions
-2. Update documentation for any new modules
-3. Test deployments in dev environment first
-4. Ensure Bicep templates pass linting (`bicep build`)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test the deployment
+5. Submit a pull request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
+## 🙏 Acknowledgments
 
-For issues and questions:
-1. Check the troubleshooting section above
-2. Review Azure documentation for specific services
-3. Open an issue in this repository with deployment logs
+- Microsoft Azure Architecture Center
+- Azure Bicep team
+- Cloud Adoption Framework
+- Well-Architected Framework
+
+---
+
+**Note**: This infrastructure was successfully deployed and tested in the Central US region. Adjust parameters according to your specific requirements and compliance needs.
