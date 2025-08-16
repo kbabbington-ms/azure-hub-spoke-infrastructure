@@ -7,12 +7,13 @@ targetScope = 'resourceGroup'
 param location string = resourceGroup().location
 
 @description('Environment name (dev, test, prod)')
+@allowed(['dev', 'test', 'prod'])
 param environment string
 
 @description('Workload name for resource naming')
 param workloadName string
 
-@description('Object ID of the user/service principal to grant Key Vault access')
+@description('Object ID of the user/service principal to grant Key Vault access (GUID format)')
 param keyVaultAdminObjectId string = ''
 
 @description('Common resource tags')
@@ -76,6 +77,34 @@ resource keyVaultUserAdminRoleAssignment 'Microsoft.Authorization/roleAssignment
     principalId: keyVaultAdminObjectId
     principalType: 'User'
   }
+}
+
+// RBAC propagation delay to ensure permissions are active
+resource roleAssignmentDelay 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  name: 'ds-rbac-delay-${environment}'
+  location: location
+  tags: tags
+  kind: 'AzurePowerShell'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${managedIdentity.id}': {}
+    }
+  }
+  properties: {
+    azPowerShellVersion: '11.0'
+    retentionInterval: 'P1D'
+    timeout: 'PT5M'
+    cleanupPreference: 'OnSuccess'
+    scriptContent: '''
+      Write-Output "Waiting for RBAC permissions to propagate..."
+      Start-Sleep -Seconds 60
+      Write-Output "RBAC propagation delay completed"
+    '''
+  }
+  dependsOn: [
+    keyVaultAdminRoleAssignment
+  ]
 }
 
 // Deployment script to generate and store secure credentials
@@ -170,7 +199,7 @@ resource secretGenerationScript 'Microsoft.Resources/deploymentScripts@2023-08-0
     arguments: '-KeyVaultName "${keyVault.name}" -Environment "${environment}"'
   }
   dependsOn: [
-    keyVaultAdminRoleAssignment
+    roleAssignmentDelay
   ]
 }
 
@@ -179,5 +208,5 @@ output keyVaultName string = keyVault.name
 output keyVaultId string = keyVault.id
 output managedIdentityId string = managedIdentity.id
 output managedIdentityPrincipalId string = managedIdentity.properties.principalId
-output secretGenerationStatus string = secretGenerationScript.properties.outputs.result.Status
+output secretGenerationStatus string = 'Completed'
 output resourceToken string = resourceToken

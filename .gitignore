@@ -1,9 +1,13 @@
 # Azure specific
 .azure/
 *.log
+deployment-output.txt
+validation-result.txt
 
 # Bicep
 *.generated.json
+foundations-*.json
+test-*.bicep
 
 # IDE
 .vscode/
