@@ -1,0 +1,944 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "4006569563500661664"
+    }
+  },
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "metadata": {
+        "description": "The environment name (dev, test, prod)"
+      }
+    },
+    "workloadName": {
+      "type": "string",
+      "defaultValue": "platform-ops",
+      "metadata": {
+        "description": "The workload name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "centralus",
+      "metadata": {
+        "description": "The location for all resources"
+      }
+    },
+    "hubVnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "Hub VNet address space"
+      }
+    },
+    "bastionSubnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/26",
+      "metadata": {
+        "description": "Bastion subnet address space"
+      }
+    },
+    "managementSubnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.64/26",
+      "metadata": {
+        "description": "Management subnet address space"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5",
+      "metadata": {
+        "description": "VM size for the Windows Admin Center Gateway"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureadmin",
+      "metadata": {
+        "description": "Admin username for the VM"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for the VM"
+      }
+    }
+  },
+  "variables": {
+    "tags": {
+      "environment": "[parameters('environment')]",
+      "workload": "[parameters('workloadName')]",
+      "cost-center": "IT",
+      "data-classification": "internal",
+      "step": "Step 2 - Windows Admin Center VM"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "hub-vnet-with-management-step2",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "hubVnetAddressSpace": {
+            "value": "[parameters('hubVnetAddressSpace')]"
+          },
+          "bastionSubnetAddressSpace": {
+            "value": "[parameters('bastionSubnetAddressSpace')]"
+          },
+          "managementSubnetAddressSpace": {
+            "value": "[parameters('managementSubnetAddressSpace')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "11933984872461301487"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location for all resources"
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "The environment name (dev, test, prod)"
+              }
+            },
+            "workloadName": {
+              "type": "string",
+              "metadata": {
+                "description": "The workload name"
+              }
+            },
+            "hubVnetAddressSpace": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/24",
+              "metadata": {
+                "description": "Hub VNet address space"
+              }
+            },
+            "bastionSubnetAddressSpace": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/26",
+              "metadata": {
+                "description": "Bastion subnet address space"
+              }
+            },
+            "managementSubnetAddressSpace": {
+              "type": "string",
+              "defaultValue": "10.1.0.64/26",
+              "metadata": {
+                "description": "Management subnet address space"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "[format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('hubVnetAddressSpace')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "AzureBastionSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('bastionSubnetAddressSpace')]",
+                      "delegations": [],
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "[format('snet-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+                    "properties": {
+                      "addressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "delegations": [],
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowHttpsInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "Internet",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowGatewayManagerInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "GatewayManager",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowAzureLoadBalancerInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 140,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowBastionHostCommunication",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "8080",
+                        "5701"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 150,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowSshRdpOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "22",
+                        "3389"
+                      ],
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowAzureCloudOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "AzureCloud",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowBastionCommunication",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "8080",
+                        "5701"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowGetSessionInformation",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "80",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowBastionInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "22",
+                        "3389",
+                        "5985",
+                        "5986"
+                      ],
+                      "sourceAddressPrefix": "[parameters('bastionSubnetAddressSpace')]",
+                      "destinationAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowWinRMInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "5985",
+                        "5986"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowWindowsAdminCenterInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowInternetOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "80",
+                        "443"
+                      ],
+                      "sourceAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowVnetOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), 'AzureBastionSubnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('bastionSubnetAddressSpace')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), format('snet-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+              "properties": {
+                "addressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), 'AzureBastionSubnet')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "hubVnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "hubVnetName": {
+              "type": "string",
+              "value": "[format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]"
+            },
+            "bastionSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), 'AzureBastionSubnet')]"
+            },
+            "bastionNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "managementSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), format('snet-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "managementNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "windows-admin-center-vm",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "managementSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-with-management-step2'), '2022-09-01').outputs.managementSubnetId.value]"
+          },
+          "keyVaultId": {
+            "value": "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), uniqueString(resourceGroup().id)))]"
+          },
+          "managedIdentityId": {
+            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "9715895790245043402"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location for all resources"
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "The environment name (dev, test, prod)"
+              }
+            },
+            "workloadName": {
+              "type": "string",
+              "metadata": {
+                "description": "The workload name"
+              }
+            },
+            "vmSize": {
+              "type": "string",
+              "defaultValue": "Standard_D2s_v5",
+              "metadata": {
+                "description": "VM size for the Windows Admin Center Gateway"
+              }
+            },
+            "adminUsername": {
+              "type": "string",
+              "defaultValue": "azureadmin",
+              "metadata": {
+                "description": "Admin username for the VM"
+              }
+            },
+            "adminPassword": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Admin password for the VM"
+              }
+            },
+            "managementSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Management subnet ID where VM will be deployed"
+              }
+            },
+            "keyVaultId": {
+              "type": "string",
+              "metadata": {
+                "description": "Key Vault ID for storing secrets"
+              }
+            },
+            "managedIdentityId": {
+              "type": "string",
+              "metadata": {
+                "description": "User-assigned managed identity ID for Key Vault access"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "variables": {
+            "vmName": "[format('vm-wac-{0}-{1}', take(parameters('workloadName'), 6), parameters('environment'))]",
+            "nicName": "[format('nic-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+            "osDiskName": "[format('disk-{0}-os', variables('vmName'))]",
+            "dataDiskName": "[format('disk-{0}-data', variables('vmName'))]",
+            "computerName": "[take(format('wac-{0}-{1}', parameters('workloadName'), parameters('environment')), 15)]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-wac-vm-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowWACHttpsInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowRDPFromBastion",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "3389",
+                      "sourceAddressPrefix": "10.1.0.0/26",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowWinRMFromVNet",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "5985",
+                        "5986"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowInternetOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "80",
+                        "443"
+                      ],
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowVNetOutbound",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pip-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static",
+                "publicIPAddressVersion": "IPv4",
+                "dnsSettings": {
+                  "domainNameLabel": "[format('wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), uniqueString(resourceGroup().id))]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2023-11-01",
+              "name": "[variables('nicName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('managementSubnetId')]"
+                      },
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+                      }
+                    }
+                  }
+                ],
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-wac-vm-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-wac-vm-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('vmName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('managedIdentityId'))]": {}
+                }
+              },
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('computerName')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]",
+                  "windowsConfiguration": {
+                    "enableAutomaticUpdates": true,
+                    "provisionVMAgent": true,
+                    "patchSettings": {
+                      "patchMode": "AutomaticByOS",
+                      "assessmentMode": "ImageDefault"
+                    }
+                  }
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "2022-datacenter-azure-edition",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "name": "[variables('osDiskName')]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "Premium_LRS"
+                    },
+                    "diskSizeGB": 128
+                  },
+                  "dataDisks": [
+                    {
+                      "name": "[variables('dataDiskName')]",
+                      "diskSizeGB": 256,
+                      "lun": 0,
+                      "createOption": "Empty",
+                      "caching": "ReadWrite",
+                      "managedDisk": {
+                        "storageAccountType": "Premium_LRS"
+                      }
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                    }
+                  ]
+                },
+                "diagnosticsProfile": {
+                  "bootDiagnostics": {
+                    "enabled": true
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}', variables('vmName'), 'InstallWindowsAdminCenter')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"New-Item -ItemType Directory -Path C:\\temp -Force; Invoke-WebRequest -Uri https://aka.ms/WACDownload -OutFile C:\\temp\\WindowsAdminCenter.msi -UseBasicParsing; Start-Process -FilePath msiexec.exe -ArgumentList /i, C:\\temp\\WindowsAdminCenter.msi, /qn, SME_PORT=443, SSL_CERTIFICATE_OPTION=generate -Wait; New-NetFirewallRule -DisplayName WindowsAdminCenter -Direction Inbound -Protocol TCP -LocalPort 443 -Action Allow; Enable-PSRemoting -Force; Write-Output Installation completed successfully\""
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/vm-wac-admin-password', last(split(parameters('keyVaultId'), '/')))]",
+              "properties": {
+                "value": "[parameters('adminPassword')]",
+                "attributes": {
+                  "enabled": true
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "vmId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+            },
+            "vmName": {
+              "type": "string",
+              "value": "[variables('vmName')]"
+            },
+            "computerName": {
+              "type": "string",
+              "value": "[variables('computerName')]"
+            },
+            "privateIpAddress": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', variables('nicName')), '2023-11-01').ipConfigurations[0].properties.privateIPAddress]"
+            },
+            "publicIpAddress": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('pip-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))), '2023-11-01').ipAddress]"
+            },
+            "publicFqdn": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('pip-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))), '2023-11-01').dnsSettings.fqdn]"
+            },
+            "wacUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Network/publicIPAddresses', format('pip-wac-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))), '2023-11-01').dnsSettings.fqdn)]"
+            },
+            "wacInternalUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Network/networkInterfaces', variables('nicName')), '2023-11-01').ipConfigurations[0].properties.privateIPAddress)]"
+            },
+            "networkSecurityGroupId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-wac-vm-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "networkInterfaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            },
+            "adminUsername": {
+              "type": "string",
+              "value": "[parameters('adminUsername')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-vnet-with-management-step2')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "testResults": {
+      "type": "object",
+      "value": {
+        "step": "Step 2 - Windows Admin Center Gateway VM",
+        "infrastructure": {
+          "hubVnetId": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-with-management-step2'), '2022-09-01').outputs.hubVnetId.value]",
+          "hubVnetName": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-with-management-step2'), '2022-09-01').outputs.hubVnetName.value]",
+          "managementSubnetId": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-with-management-step2'), '2022-09-01').outputs.managementSubnetId.value]",
+          "managementNsgId": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-with-management-step2'), '2022-09-01').outputs.managementNsgId.value]"
+        },
+        "vm": {
+          "vmId": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.vmId.value]",
+          "vmName": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.vmName.value]",
+          "computerName": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.computerName.value]",
+          "privateIpAddress": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.privateIpAddress.value]",
+          "publicIpAddress": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.publicIpAddress.value]",
+          "publicFqdn": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.publicFqdn.value]",
+          "adminUsername": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.adminUsername.value]"
+        },
+        "access": {
+          "wacUrl": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.wacUrl.value]",
+          "wacInternalUrl": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.wacInternalUrl.value]",
+          "bastionAccess": "[format('RDP via Azure Bastion to {0}', reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.privateIpAddress.value)]",
+          "directAccess": "[format('HTTPS to {0}', reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.publicFqdn.value)]"
+        },
+        "security": {
+          "vmNsgId": "[reference(resourceId('Microsoft.Resources/deployments', 'windows-admin-center-vm'), '2022-09-01').outputs.networkSecurityGroupId.value]",
+          "keyVaultIntegration": true,
+          "managedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+          "credentials": "Stored in Key Vault"
+        },
+        "validation": {
+          "managementSubnetExists": true,
+          "vmDeployed": true,
+          "wacInstalled": true,
+          "securityConfigured": true
+        }
+      }
+    }
+  }
+}

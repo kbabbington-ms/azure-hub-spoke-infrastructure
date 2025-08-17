@@ -1,0 +1,906 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "16888477625718377045"
+    }
+  },
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "metadata": {
+        "description": "The environment name (dev, test, prod)"
+      }
+    },
+    "workloadName": {
+      "type": "string",
+      "defaultValue": "platform-ops",
+      "metadata": {
+        "description": "The workload name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "centralus",
+      "metadata": {
+        "description": "The location for all resources"
+      }
+    },
+    "hubVnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "Hub VNet address space"
+      }
+    },
+    "bastionSubnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/26",
+      "metadata": {
+        "description": "Bastion subnet address space"
+      }
+    },
+    "managementSubnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.64/26",
+      "metadata": {
+        "description": "Management subnet address space"
+      }
+    },
+    "staticWebAppSku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Static Web App SKU"
+      }
+    },
+    "repositoryUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Repository URL for the static web app"
+      }
+    },
+    "repositoryBranch": {
+      "type": "string",
+      "defaultValue": "main",
+      "metadata": {
+        "description": "Repository branch"
+      }
+    },
+    "appLocation": {
+      "type": "string",
+      "defaultValue": "/",
+      "metadata": {
+        "description": "App location in the repository"
+      }
+    },
+    "outputLocation": {
+      "type": "string",
+      "defaultValue": "dist",
+      "metadata": {
+        "description": "Output location for built app"
+      }
+    }
+  },
+  "variables": {
+    "tags": {
+      "environment": "[parameters('environment')]",
+      "workload": "[parameters('workloadName')]",
+      "cost-center": "IT",
+      "data-classification": "internal",
+      "step": "Step 3 - Azure Static Web App"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "hub-vnet-step3",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "hubVnetAddressSpace": {
+            "value": "[parameters('hubVnetAddressSpace')]"
+          },
+          "bastionSubnetAddressSpace": {
+            "value": "[parameters('bastionSubnetAddressSpace')]"
+          },
+          "managementSubnetAddressSpace": {
+            "value": "[parameters('managementSubnetAddressSpace')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "11933984872461301487"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location for all resources"
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "The environment name (dev, test, prod)"
+              }
+            },
+            "workloadName": {
+              "type": "string",
+              "metadata": {
+                "description": "The workload name"
+              }
+            },
+            "hubVnetAddressSpace": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/24",
+              "metadata": {
+                "description": "Hub VNet address space"
+              }
+            },
+            "bastionSubnetAddressSpace": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/26",
+              "metadata": {
+                "description": "Bastion subnet address space"
+              }
+            },
+            "managementSubnetAddressSpace": {
+              "type": "string",
+              "defaultValue": "10.1.0.64/26",
+              "metadata": {
+                "description": "Management subnet address space"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "[format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('hubVnetAddressSpace')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "AzureBastionSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('bastionSubnetAddressSpace')]",
+                      "delegations": [],
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "[format('snet-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+                    "properties": {
+                      "addressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "delegations": [],
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowHttpsInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "Internet",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowGatewayManagerInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "GatewayManager",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowAzureLoadBalancerInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 140,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowBastionHostCommunication",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "8080",
+                        "5701"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 150,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowSshRdpOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "22",
+                        "3389"
+                      ],
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowAzureCloudOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "AzureCloud",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowBastionCommunication",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "8080",
+                        "5701"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowGetSessionInformation",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "80",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowBastionInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "22",
+                        "3389",
+                        "5985",
+                        "5986"
+                      ],
+                      "sourceAddressPrefix": "[parameters('bastionSubnetAddressSpace')]",
+                      "destinationAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowWinRMInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "5985",
+                        "5986"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowWindowsAdminCenterInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowInternetOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "80",
+                        "443"
+                      ],
+                      "sourceAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowVnetOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), 'AzureBastionSubnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('bastionSubnetAddressSpace')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), format('snet-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+              "properties": {
+                "addressPrefix": "[parameters('managementSubnetAddressSpace')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), 'AzureBastionSubnet')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "hubVnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "hubVnetName": {
+              "type": "string",
+              "value": "[format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]"
+            },
+            "bastionSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), 'AzureBastionSubnet')]"
+            },
+            "bastionNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-bastion-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "managementSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-hub-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')), format('snet-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            },
+            "managementNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-management-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "static-web-app",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "skuName": {
+            "value": "[parameters('staticWebAppSku')]"
+          },
+          "repositoryUrl": {
+            "value": "[parameters('repositoryUrl')]"
+          },
+          "repositoryBranch": {
+            "value": "[parameters('repositoryBranch')]"
+          },
+          "appLocation": {
+            "value": "[parameters('appLocation')]"
+          },
+          "outputLocation": {
+            "value": "[parameters('outputLocation')]"
+          },
+          "hubVnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-step3'), '2022-09-01').outputs.hubVnetId.value]"
+          },
+          "managementSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-step3'), '2022-09-01').outputs.managementSubnetId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "6629281150455488033"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location for all resources"
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "The environment name (dev, test, prod)"
+              }
+            },
+            "workloadName": {
+              "type": "string",
+              "metadata": {
+                "description": "The workload name"
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "Standard",
+              "metadata": {
+                "description": "SKU for the Static Web App"
+              }
+            },
+            "repositoryUrl": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Repository URL for the static web app"
+              }
+            },
+            "repositoryBranch": {
+              "type": "string",
+              "defaultValue": "main",
+              "metadata": {
+                "description": "Repository branch"
+              }
+            },
+            "appLocation": {
+              "type": "string",
+              "defaultValue": "/",
+              "metadata": {
+                "description": "App location in the repository"
+              }
+            },
+            "apiLocation": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "API location in the repository"
+              }
+            },
+            "outputLocation": {
+              "type": "string",
+              "defaultValue": "build",
+              "metadata": {
+                "description": "Output location for built app"
+              }
+            },
+            "hubVnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Hub VNet ID for private endpoint integration"
+              }
+            },
+            "managementSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Management subnet ID for private endpoint"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "variables": {
+            "staticWebAppFullName": "[format('swa-{0}-{1}-{2}', parameters('workloadName'), parameters('environment'), parameters('location'))]",
+            "privateEndpointName": "[format('pe-{0}', variables('staticWebAppFullName'))]",
+            "privateDnsZoneName": "privatelink.azurestaticapps.net"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/staticSites",
+              "apiVersion": "2023-01-01",
+              "name": "[variables('staticWebAppFullName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('skuName')]"
+              },
+              "properties": {
+                "buildProperties": {
+                  "skipGithubActionWorkflowGeneration": true,
+                  "appLocation": "[parameters('appLocation')]",
+                  "apiLocation": "[parameters('apiLocation')]",
+                  "outputLocation": "[parameters('outputLocation')]"
+                },
+                "repositoryUrl": "[parameters('repositoryUrl')]",
+                "branch": "[parameters('repositoryBranch')]",
+                "stagingEnvironmentPolicy": "Enabled",
+                "allowConfigFileUpdates": true,
+                "provider": "GitHub",
+                "enterpriseGradeCdnStatus": "Disabled"
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('privateDnsZoneName')]",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', variables('privateDnsZoneName'), format('{0}-link', variables('privateDnsZoneName')))]",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[parameters('hubVnetId')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-pe-{0}', variables('staticWebAppFullName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowHttpsInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowHttpInbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "80",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowVnetOutbound",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "AllowInternetOutbound",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "80",
+                        "443"
+                      ],
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[variables('privateEndpointName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('managementSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "swa-private-link",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName'))]",
+                      "groupIds": [
+                        "sites"
+                      ],
+                      "privateLinkServiceConnectionState": {
+                        "status": "Approved",
+                        "description": "Private endpoint for Static Web App"
+                      }
+                    }
+                  }
+                ],
+                "customNetworkInterfaceName": "[format('nic-{0}', variables('privateEndpointName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', variables('privateEndpointName'), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+              ]
+            },
+            {
+              "condition": "[not(empty(parameters('repositoryUrl')))]",
+              "type": "Microsoft.Web/staticSites/customDomains",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', variables('staticWebAppFullName'), format('{0}-{1}.example.com', parameters('workloadName'), parameters('environment')))]",
+              "properties": {
+                "validationMethod": "dns-txt-token"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "staticWebAppId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName'))]"
+            },
+            "staticWebAppName": {
+              "type": "string",
+              "value": "[variables('staticWebAppFullName')]"
+            },
+            "staticWebAppDefaultHostname": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName')), '2023-01-01').defaultHostname]"
+            },
+            "staticWebAppCustomDomains": {
+              "type": "array",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName')), '2023-01-01').customDomains]"
+            },
+            "repositoryUrl": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName')), '2023-01-01').repositoryUrl]"
+            },
+            "branch": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites', variables('staticWebAppFullName')), '2023-01-01').branch]"
+            },
+            "privateEndpointId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+            },
+            "privateDnsZoneId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+            },
+            "privateIpAddress": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName')), '2023-11-01').networkInterfaces[0].properties.ipConfigurations[0].properties.privateIPAddress]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-vnet-step3')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "testResults": {
+      "type": "object",
+      "value": {
+        "step": "Step 3 - Azure Static Web App",
+        "infrastructure": {
+          "hubVnetId": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-step3'), '2022-09-01').outputs.hubVnetId.value]",
+          "hubVnetName": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-step3'), '2022-09-01').outputs.hubVnetName.value]",
+          "managementSubnetId": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet-step3'), '2022-09-01').outputs.managementSubnetId.value]"
+        },
+        "staticWebApp": {
+          "id": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.staticWebAppId.value]",
+          "name": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.staticWebAppName.value]",
+          "defaultHostname": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.staticWebAppDefaultHostname.value]",
+          "customDomains": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.staticWebAppCustomDomains.value]",
+          "repositoryUrl": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.repositoryUrl.value]",
+          "branch": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.branch.value]"
+        },
+        "privateEndpoint": {
+          "id": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.privateEndpointId.value]",
+          "privateIpAddress": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.privateIpAddress.value]",
+          "privateDnsZoneId": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.privateDnsZoneId.value]"
+        },
+        "access": {
+          "publicUrl": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.staticWebAppDefaultHostname.value)]",
+          "privateUrl": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', 'static-web-app'), '2022-09-01').outputs.privateIpAddress.value)]",
+          "vnetAccess": "Private endpoint accessible from management subnet"
+        },
+        "validation": {
+          "staticWebAppDeployed": true,
+          "privateEndpointConfigured": true,
+          "privateDnsConfigured": true,
+          "vnetIntegrated": true
+        }
+      }
+    }
+  }
+}
