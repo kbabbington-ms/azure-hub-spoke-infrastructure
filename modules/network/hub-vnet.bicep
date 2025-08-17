@@ -93,7 +93,7 @@ resource bastionNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
       {
         name: 'AllowBastionHostCommunication'
         properties: {
-          protocol: '*'
+          protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRanges: [
             '8080'
@@ -109,7 +109,7 @@ resource bastionNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
       {
         name: 'AllowSshRdpOutbound'
         properties: {
-          protocol: '*'
+          protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRanges: [
             '22'
@@ -138,7 +138,7 @@ resource bastionNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
       {
         name: 'AllowBastionCommunication'
         properties: {
-          protocol: '*'
+          protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRanges: [
             '8080'
@@ -154,7 +154,7 @@ resource bastionNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
       {
         name: 'AllowGetSessionInformation'
         properties: {
-          protocol: '*'
+          protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '80'
           sourceAddressPrefix: '*'

@@ -48,6 +48,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enabledForTemplateDeployment: true
     enabledForDiskEncryption: true
     enableSoftDelete: true
+    enablePurgeProtection: true
     softDeleteRetentionInDays: 7
     publicNetworkAccess: 'Enabled' // Required for deployment scripts
     networkAcls: {

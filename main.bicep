@@ -33,8 +33,11 @@ param sqlAdminLogin string = 'sqladmin'
 @secure()
 param sqlAdminPassword string
 
-@description('Object ID of the user/service principal to grant Key Vault access')
-param keyVaultAdminObjectId string = ''
+@description('Name of the existing Key Vault created by the foundation deployment')
+param existingKeyVaultName string
+
+@description('Resource ID of the existing Key Vault created by the foundation deployment')
+param existingKeyVaultId string
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -91,18 +94,9 @@ module vnetPeering 'modules/network/vnet-peering.bicep' = {
   }
 }
 
-// Deploy Key Vault
-module keyVault 'modules/security/key-vault.bicep' = {
-  name: 'deploy-key-vault'
-  params: {
-    location: location
-    environment: environment
-    workloadName: workloadName
-    privateEndpointSubnetId: spokeVnet.outputs.privateEndpointSubnetId
-    spokeVnetId: spokeVnet.outputs.spokeVnetId
-    keyVaultAdminObjectId: keyVaultAdminObjectId
-    tags: tags
-  }
+// Reference existing Key Vault (deployed by foundation)
+resource existingKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: existingKeyVaultName
 }
 
 // Deploy Virtual Machine
@@ -113,7 +107,7 @@ module virtualMachine 'modules/compute/virtual-machine.bicep' = {
     environment: environment
     workloadName: workloadName
     vmSubnetId: spokeVnet.outputs.vmSubnetId
-    keyVaultId: keyVault.outputs.keyVaultId
+    keyVaultId: existingKeyVaultId
     vmAdminUsername: vmAdminUsername
     vmAdminPassword: vmAdminPassword
     tags: tags
@@ -131,7 +125,7 @@ module sqlDatabase 'modules/database/sql-database.bicep' = {
     spokeVnetId: spokeVnet.outputs.spokeVnetId
     sqlAdminLogin: sqlAdminLogin
     sqlAdminPassword: sqlAdminPassword
-    keyVaultId: keyVault.outputs.keyVaultId
+    keyVaultId: existingKeyVaultId
     tags: tags
   }
 }
@@ -151,8 +145,8 @@ module bastion 'modules/bastion/bastion.bicep' = {
 // Outputs
 output hubVnetId string = hubVnet.outputs.hubVnetId
 output spokeVnetId string = spokeVnet.outputs.spokeVnetId
-output keyVaultName string = keyVault.outputs.keyVaultName
-output keyVaultUri string = keyVault.outputs.keyVaultUri
+output keyVaultName string = existingKeyVaultName
+output keyVaultUri string = existingKeyVault.properties.vaultUri
 output vmName string = virtualMachine.outputs.vmName
 output vmPrivateIpAddress string = virtualMachine.outputs.vmPrivateIpAddress
 output sqlServerName string = sqlDatabase.outputs.sqlServerName

@@ -23,7 +23,7 @@
     "vmAdminPassword": {
       "reference": {
         "keyVault": {
-          "id": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cus/providers/Microsoft.KeyVault/vaults/{vault-name}"
+          "id": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cen/providers/Microsoft.KeyVault/vaults/kv-t5cl7dldgq4"
         },
         "secretName": "vm-admin-password"
       }
@@ -34,13 +34,16 @@
     "sqlAdminPassword": {
       "reference": {
         "keyVault": {
-          "id": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cus/providers/Microsoft.KeyVault/vaults/{vault-name}"
+          "id": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cen/providers/Microsoft.KeyVault/vaults/kv-t5cl7dldgq4"
         },
         "secretName": "sql-admin-password"
       }
     },
-    "keyVaultAdminObjectId": {
-      "value": "f91ec0b1-b773-439d-893c-8af32cbf2577"
+    "existingKeyVaultName": {
+      "value": "kv-t5cl7dldgq4"
+    },
+    "existingKeyVaultId": {
+      "value": "/subscriptions/3b5139a3-ca7c-42ab-8373-f267f11fbe64/resourceGroups/rg-platform-ops-dev-cen/providers/Microsoft.KeyVault/vaults/kv-t5cl7dldgq4"
     },
     "tags": {
       "value": {
