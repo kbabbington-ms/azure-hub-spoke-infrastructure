@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Hub-Spoke Infrastructure Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            width: 90%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .status-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #3498db;
+        }
+        
+        .status-card.success {
+            border-left-color: #27ae60;
+        }
+        
+        .status-card.warning {
+            border-left-color: #f39c12;
+        }
+        
+        .status-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .status-badge.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.deployed {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .links-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .link-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #2c3e50;
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .link-card h4 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        
+        .architecture-info {
+            margin-top: 30px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        
+        .network-diagram {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .network-diagram pre {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #2c3e50;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Azure Hub-Spoke Infrastructure</h1>
+            <p class="subtitle">Phase 2 Complete - Management & Web Platform</p>
+        </div>
+        
+        <div class="status-grid">
+            <div class="status-card success">
+                <h3>📡 Network Infrastructure</h3>
+                <div class="status-item">
+                    <span>Hub VNet (10.1.0.0/24)</span>
+                    <span class="status-badge online">Online</span>
+                </div>
+                <div class="status-item">
+                    <span>Bastion Subnet (10.1.0.0/26)</span>
+                    <span class="status-badge online">Online</span>
+                </div>
+                <div class="status-item">
+                    <span>Management Subnet (10.1.0.64/26)</span>
+                    <span class="status-badge online">Online</span>
+                </div>
+                <div class="status-item">
+                    <span>Spoke VNet (10.2.0.0/24)</span>
+                    <span class="status-badge online">Online</span>
+                </div>
+            </div>
+            
+            <div class="status-card success">
+                <h3>🖥️ Management Services</h3>
+                <div class="status-item">
+                    <span>Azure Bastion</span>
+                    <span class="status-badge online">Online</span>
+                </div>
+                <div class="status-item">
+                    <span>Windows Admin Center VM</span>
+                    <span class="status-badge online">Running</span>
+                </div>
+                <div class="status-item">
+                    <span>Management NSG Rules</span>
+                    <span class="status-badge deployed">Deployed</span>
+                </div>
+            </div>
+            
+            <div class="status-card success">
+                <h3>🌐 Web Platform</h3>
+                <div class="status-item">
+                    <span>Azure Static Web App</span>
+                    <span class="status-badge online">Live</span>
+                </div>
+                <div class="status-item">
+                    <span>Private Endpoint</span>
+                    <span class="status-badge deployed">Configured</span>
+                </div>
+                <div class="status-item">
+                    <span>Private DNS Zone</span>
+                    <span class="status-badge deployed">Linked</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="network-diagram">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">🏗️ Network Architecture</h3>
+            <pre>
+    ┌─────────────────────────────────────────────────────────────┐
+    │                   Hub VNet (10.1.0.0/24)                   │
+    │  ┌─────────────────────┐    ┌───────────────────────────┐   │
+    │  │  Bastion Subnet     │    │   Management Subnet       │   │
+    │  │   (10.1.0.0/26)     │    │    (10.1.0.64/26)        │   │
+    │  │                     │    │                           │   │
+    │  │  ┌───────────────┐  │    │  ┌─────────────────────┐ │   │
+    │  │  │ Azure Bastion │  │    │  │  Windows Admin      │ │   │
+    │  │  │   Gateway     │◄─┼────┼──┤   Center VM         │ │   │
+    │  │  └───────────────┘  │    │  └─────────────────────┘ │   │
+    │  └─────────────────────┘    │           │               │   │
+    │                             │           ▼               │   │
+    │                             │  ┌─────────────────────┐ │   │
+    │                             │  │ Static Web App      │ │   │
+    │                             │  │ Private Endpoint    │ │   │
+    │                             │  └─────────────────────┘ │   │
+    │                             └───────────────────────────┘   │
+    └─────────────────────────────────────────────────────────────┘
+                                    │
+                              ┌─────▼─────┐
+                              │  Peering  │
+                              └─────┬─────┘
+                                    │
+    ┌─────────────────────────────────▼───────────────────────────┐
+    │                 Spoke VNet (10.2.0.0/24)                   │
+    │                     (Ready for workloads)                   │
+    └─────────────────────────────────────────────────────────────┘
+            </pre>
+        </div>
+        
+        <div class="links-section">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">🔗 Quick Access Links</h3>
+            <div class="links-grid">
+                <a href="#" class="link-card" onclick="alert('Access via Azure Portal → Bastion')">
+                    <h4>🖥️ Windows Admin Center</h4>
+                    <p>Centralized server management via Azure Bastion</p>
+                </a>
+                <a href="#" class="link-card" onclick="alert('Check Azure Portal for Public URL')">
+                    <h4>🌐 Static Web App (Public)</h4>
+                    <p>Public access via Azure CDN</p>
+                </a>
+                <a href="#" class="link-card" onclick="alert('Available via Private Endpoint in VNet')">
+                    <h4>🔐 Static Web App (Private)</h4>
+                    <p>Private access via VNet integration</p>
+                </a>
+                <a href="https://portal.azure.com" class="link-card" target="_blank">
+                    <h4>☁️ Azure Portal</h4>
+                    <p>Manage all Azure resources</p>
+                </a>
+            </div>
+        </div>
+        
+        <div class="architecture-info">
+            <h4>✅ Phase 2 Implementation Complete</h4>
+            <p><strong>Step 1:</strong> Management Subnet ✅ | <strong>Step 2:</strong> Windows Admin Center VM ✅ | <strong>Step 3:</strong> Azure Static Web App ✅</p>
+            <p style="margin-top: 10px;">🚀 <em>Hub-spoke infrastructure ready for production workloads</em></p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Deployed: <span id="deployTime"></span> | 
+                Environment: Development | 
+                Region: Central US
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Set deployment time to current time
+        document.getElementById('deployTime').textContent = new Date().toLocaleString();
+        
+        // Simple health check simulation
+        function healthCheck() {
+            const badges = document.querySelectorAll('.status-badge');
+            badges.forEach(badge => {
+                if (Math.random() > 0.1) { // 90% uptime simulation
+                    badge.classList.add('online');
+                } else {
+                    badge.style.background = '#f8d7da';
+                    badge.style.color = '#721c24';
+                    badge.textContent = 'Checking...';
+                }
+            });
+        }
+        
+        // Run health check every 30 seconds
+        setInterval(healthCheck, 30000);
+    </script>
+</body>
+</html>
