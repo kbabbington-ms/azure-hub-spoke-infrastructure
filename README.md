@@ -74,8 +74,13 @@ This solution deploys a comprehensive Azure infrastructure following Microsoft's
 │   ├── main.parameters.dev.json      # Development environment
 │   ├── main.parameters.test.json     # Test environment
 │   └── main.parameters.prod.json     # Production environment
-└── scripts/
-    └── deploy.ps1                    # PowerShell deployment script
+├── scripts/
+│   └── deploy.ps1                    # PowerShell deployment script
+└── Documentation/
+    ├── README.md                     # Documentation index
+    ├── RELEASE-NOTES-v1.0.0.md       # Release notes and features
+    ├── SECURITY-REMEDIATION-SUMMARY.md # Security improvements overview
+    └── *.md                          # Additional analysis and security reports
 ```
 
 ## 🔧 Configuration
@@ -171,6 +176,14 @@ az deployment group validate \
   --template-file "main.bicep" \
   --parameters "@parameters/main.parameters.dev.json"
 ```
+
+## 📚 Documentation
+
+For detailed documentation about security analysis, remediation activities, and release notes, see the **[Documentation/](./Documentation/)** folder:
+
+- **[Release Notes](./Documentation/RELEASE-NOTES-v1.0.0.md)** - Complete v1.0.0 features and deployment guide
+- **[Security Summary](./Documentation/SECURITY-REMEDIATION-SUMMARY.md)** - Overview of security improvements
+- **[Documentation Index](./Documentation/README.md)** - Complete documentation navigation
 
 ## 🤝 Contributing
 
